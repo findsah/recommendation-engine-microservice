@@ -5,7 +5,11 @@ This microservice provides personalized product recommendations to users based o
 ## Getting Started
 
 ### Prerequisites
+docker-compose build to build the container
+and 
+docker-compose up to make it up and running and you can try the api endpoints at 
 
+http://localhost:8000/docs
 - Docker
 - Docker Compose
 
