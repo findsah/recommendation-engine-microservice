@@ -51,35 +51,35 @@ def get_db():
     finally:
         db.close()
 
-# Initialize the database tables
+# Initializing the database tables
 Base.metadata.create_all(bind=engine)
 
 # Load data into the database when the application starts
 def load_data_into_db():
     df = pd.read_csv("dataset.csv")
 
-    # Remove duplicates based on user_id
+    # Removing duplicates based on user_id
     df = df.drop_duplicates(subset=['user_id'])
 
-    # Insert users
+    # Inserting users
     users_data = df[['user_id', 'name', 'age', 'gender', 'location', 'preferences']].drop_duplicates()
     users_data.rename(columns={'user_id': 'id'}, inplace=True)
     users_data.to_sql('users', con=engine, index=False, if_exists='replace')
 
-    # Insert products
+    # Inserting products
     products_data = df[['product_id', 'category', 'product_name', 'description', 'tags']].drop_duplicates()
     products_data.rename(columns={'product_id': 'id', 'product_name': 'name'}, inplace=True)
     products_data.to_sql('products', con=engine, index=False, if_exists='replace')
 
-    # Insert transactions
+    # Inserting transactions
     transactions_data = df[['user_id', 'product_id']]
     transactions_data['rating'] = 1  # Add a dummy 'rating' column
     transactions_data.to_sql('purchase_history', con=engine, index=False, if_exists='replace')
 
-# Load data into the database when the application starts
+# Loading data into the database when the application starts
 load_data_into_db()
 
-# Load data for collaborative filtering
+# Loading data for collaborative filtering
 reader = Reader(rating_scale=(1, 5))
 transactions_data = pd.read_sql_table('purchase_history', con=engine)
 data = Dataset.load_from_df(transactions_data[['user_id', 'product_id', 'rating']], reader)
