@@ -96,7 +96,6 @@ class RecommendationRequest(BaseModel):
 class RecommendationResponse(BaseModel):
     product_id: int
     score: float
-
 @app.post("/recommend", response_model=List[RecommendationResponse])
 def get_recommendations(request: RecommendationRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == request.user_id).first()
@@ -113,11 +112,13 @@ def get_recommendations(request: RecommendationRequest, db: Session = Depends(ge
     # Get products purchased by similar users
     similar_users_purchases = transactions_data[transactions_data['user_id'].isin(similar_users)]
 
-    # Extract product recommendations
-    recommendations = [
-        RecommendationResponse(product_id=p.product_id, score=1.0)  # You can adjust the score as needed
-        for _, p in similar_users_purchases.iterrows()
-        if p.product_id not in user_purchases  # Exclude products already purchased by the user
-    ]
+    # Extract product recommendations with scores
+    recommendations = []
+
+    for _, p in similar_users_purchases.iterrows():
+        if p.product_id not in user_purchases:
+            # Get the predicted rating for the product by the user
+            predicted_rating = model.predict(user.id, p.product_id).est
+            recommendations.append(RecommendationResponse(product_id=p.product_id, score=predicted_rating))
 
     return recommendations
