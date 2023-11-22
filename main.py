@@ -96,8 +96,33 @@ class RecommendationRequest(BaseModel):
 class RecommendationResponse(BaseModel):
     product_id: int
     score: float
-@app.post("/recommend", response_model=List[RecommendationResponse])
-def get_recommendations(request: RecommendationRequest, db: Session = Depends(get_db)):
+
+# Dependency to get the database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Dependency to get the collaborative filtering model
+def get_collaborative_filtering_model():
+    reader = Reader(rating_scale=(1, 5))
+    transactions_data = pd.read_sql_table('purchase_history', con=engine)
+    data = Dataset.load_from_df(transactions_data[['user_id', 'product_id', 'rating']], reader)
+    trainset, testset = train_test_split(data, test_size=0.2)
+    model = KNNBasic(sim_options={'user_based': True})
+    model.fit(trainset)
+    return model
+
+# Get the collaborative filtering model on startup
+model = get_collaborative_filtering_model()
+
+@app.post("/recommend", response_model=List[RecommendationResponse], tags=["Recommendation"])
+def get_recommendations(request: RecommendationRequest, db: Session = Depends(get_db), model: KNNBasic = Depends(get_collaborative_filtering_model)):
+    """
+    Get personalized product recommendations for a user.
+    """
     user = db.query(User).filter(User.id == request.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
