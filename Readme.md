@@ -14,8 +14,8 @@ This microservice provides personalized product recommendations to users based o
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/findsah/recommendation-engine-microservice.git
+   cd recommendation-engine-microservice
 The API will be accessible at http://localhost:8000.
 
 API Documentation
